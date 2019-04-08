@@ -96,17 +96,23 @@
 
 
 
-  <meta name="description" content="That keep me searching for a heart of gold">
-<meta name="keywords" content="live, give">
-<meta property="og:type" content="website">
-<meta property="og:title" content="Heart of Gold">
-<meta property="og:url" content="http://yoursite.com/index.html">
+  <meta name="description" content="LevelDB整体架构LevelDB可以看作是Google BigTable的单机kv存储引擎，它是一个kv型持久性存储的C++程序库。关于它的整体架构这里不在详述，可以参考文章LevelDB的设计与实现，文章主要讲述了LevelDB的全局结构，数据扭转流程，系统中的数据布局，以及一些重要的结构等，可以通过这篇文章从宏观上了解LevelDB。下面主要讲述自己通过阅读LevelDB源码后，对">
+<meta name="keywords" content="kv,leveldb">
+<meta property="og:type" content="article">
+<meta property="og:title" content="LevelDB系统结构与源码解析">
+<meta property="og:url" content="http://yoursite.com/2019/04/08/LevelDB系统结构与源码解析/index.html">
 <meta property="og:site_name" content="Heart of Gold">
-<meta property="og:description" content="That keep me searching for a heart of gold">
+<meta property="og:description" content="LevelDB整体架构LevelDB可以看作是Google BigTable的单机kv存储引擎，它是一个kv型持久性存储的C++程序库。关于它的整体架构这里不在详述，可以参考文章LevelDB的设计与实现，文章主要讲述了LevelDB的全局结构，数据扭转流程，系统中的数据布局，以及一些重要的结构等，可以通过这篇文章从宏观上了解LevelDB。下面主要讲述自己通过阅读LevelDB源码后，对">
 <meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://raw.githubusercontent.com/WenjianXiao/photos/master/LevelDB_frameWork.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/WenjianXiao/photos/master/LevelDB_Open.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/WenjianXiao/photos/master/LevelDB_Put.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/WenjianXiao/photos/master/LevelDB_Get.png">
+<meta property="og:updated_time" content="2019-04-08T01:28:50.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Heart of Gold">
-<meta name="twitter:description" content="That keep me searching for a heart of gold">
+<meta name="twitter:title" content="LevelDB系统结构与源码解析">
+<meta name="twitter:description" content="LevelDB整体架构LevelDB可以看作是Google BigTable的单机kv存储引擎，它是一个kv型持久性存储的C++程序库。关于它的整体架构这里不在详述，可以参考文章LevelDB的设计与实现，文章主要讲述了LevelDB的全局结构，数据扭转流程，系统中的数据布局，以及一些重要的结构等，可以通过这篇文章从宏观上了解LevelDB。下面主要讲述自己通过阅读LevelDB源码后，对">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/WenjianXiao/photos/master/LevelDB_frameWork.png">
 
 
 
@@ -114,7 +120,7 @@
 
   
   
-  <link rel="canonical" href="http://yoursite.com/">
+  <link rel="canonical" href="http://yoursite.com/2019/04/08/LevelDB系统结构与源码解析/">
 
 
 
@@ -124,7 +130,7 @@
   };
 </script>
 
-  <title>Heart of Gold</title>
+  <title>LevelDB系统结构与源码解析 | Heart of Gold</title>
   
 
 
@@ -172,8 +178,7 @@
     
   
 
-  <div class="container sidebar-position-left 
-  page-home">
+  <div class="container sidebar-position-left page-post-detail">
     <div class="headband"></div>
 
     <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
@@ -215,7 +220,7 @@
         
         
           
-          <li class="menu-item menu-item-home menu-item-active">
+          <li class="menu-item menu-item-home">
 
     
     
@@ -328,9 +333,9 @@
           
           <div id="content" class="content">
             
-  <section id="posts" class="posts-expand">
+
+  <div id="posts" class="posts-expand">
     
-      
 
   
 
@@ -362,10 +367,8 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2019/04/08/LevelDB系统结构与源码解析/" class="post-title-link" itemprop="url">LevelDB系统结构与源码解析</a>
+          <h1 class="post-title" itemprop="name headline">LevelDB系统结构与源码解析
+
               
             
           </h1>
@@ -447,9 +450,7 @@
       
 
       
-        
-          
-            <h2 id="LevelDB整体架构"><a href="#LevelDB整体架构" class="headerlink" title="LevelDB整体架构"></a>LevelDB整体架构</h2><p>LevelDB可以看作是Google BigTable的单机kv存储引擎，它是一个kv型持久性存储的C++程序库。关于它的整体架构这里不在详述，可以参考文章<a href="http://www.cnblogs.com/haippy/archive/2011/12/04/2276064.html" target="_blank" rel="noopener">LevelDB的设计与实现</a>，文章主要讲述了LevelDB的全局结构，数据扭转流程，系统中的数据布局，以及一些重要的结构等，可以通过这篇文章从宏观上了解LevelDB。下面主要讲述自己通过阅读LevelDB源码后，对它的一些理解。</p>
+        <h2 id="LevelDB整体架构"><a href="#LevelDB整体架构" class="headerlink" title="LevelDB整体架构"></a>LevelDB整体架构</h2><p>LevelDB可以看作是Google BigTable的单机kv存储引擎，它是一个kv型持久性存储的C++程序库。关于它的整体架构这里不在详述，可以参考文章<a href="http://www.cnblogs.com/haippy/archive/2011/12/04/2276064.html" target="_blank" rel="noopener">LevelDB的设计与实现</a>，文章主要讲述了LevelDB的全局结构，数据扭转流程，系统中的数据布局，以及一些重要的结构等，可以通过这篇文章从宏观上了解LevelDB。下面主要讲述自己通过阅读LevelDB源码后，对它的一些理解。</p>
 <h2 id="源码结构分析"><a href="#源码结构分析" class="headerlink" title="源码结构分析"></a>源码结构分析</h2><h3 id="源码结构"><a href="#源码结构" class="headerlink" title="源码结构"></a>源码结构</h3><p>下图为阅读LevelDB源码后，对它的各个模块之间的关系的一个抽象化的理解<br><img src="https://raw.githubusercontent.com/WenjianXiao/photos/master/LevelDB_frameWork.png" alt="LevelDB源码框架图"><br>下面首先来了解各模块，然后来通过一些重要流程来把各个模块串联起来</p>
 <h3 id="模块说明"><a href="#模块说明" class="headerlink" title="模块说明"></a>模块说明</h3><h4 id="DB-和-DBImpl"><a href="#DB-和-DBImpl" class="headerlink" title="DB 和 DBImpl"></a>DB 和 DBImpl</h4><p>DB是leveldb对外的模块，它提供了对leveldb数据库进行操作的接口。它提供的访问数据库的接口有：</p>
 <pre><code>Open: 打开数据库，获取操作数据库的对象指针。同时leveldb只能单进程访问，进程间通过lock文件来保证这一点，同时进程内通过记录打开的db name来保证这一点
@@ -579,8 +580,6 @@ d. 在BlockCache中查找Block，如果未命中，会将Block load到Cache中�
 <p>[3]. <a href="https://blog.csdn.net/anderscloud/article/details/7182165" target="_blank" rel="noopener">https://blog.csdn.net/anderscloud/article/details/7182165</a>.</p>
 <p>[4]. <a href="https://www.atatech.org/articles/65485" target="_blank" rel="noopener">https://www.atatech.org/articles/65485</a> </p>
 
-          
-        
       
     </div>
 
@@ -601,14 +600,22 @@ d. 在BlockCache中查找Block，如果未命中，会将Block load到Cache中�
 
     <footer class="post-footer">
       
+        <div class="post-tags">
+          
+            <a href="/tags/kv/" rel="tag"># kv</a>
+          
+            <a href="/tags/leveldb/" rel="tag"># leveldb</a>
+          
+        </div>
+      
+
+      
+      
+      
 
       
 
       
-
-      
-      
-        <div class="post-eof"></div>
       
     </footer>
   </div>
@@ -618,14 +625,15 @@ d. 在BlockCache中查找Block，如果未命中，会将Block load到Cache中�
   </article>
 
 
-    
-  </section>
-
-  
+  </div>
 
 
           </div>
           
+
+  
+
+
 
         </div>
         
@@ -645,8 +653,17 @@ d. 在BlockCache中查找Block，如果未命中，会将Block load到Cache中�
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
 
-      <div class="site-overview-wrap sidebar-panel sidebar-panel-active">
+      <div class="site-overview-wrap sidebar-panel">
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
@@ -730,6 +747,23 @@ d. 在BlockCache中查找Block，如果未命中，会将Block load到Cache中�
         </div>
       </div>
 
+      
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#LevelDB整体架构"><span class="nav-number">1.</span> <span class="nav-text">LevelDB整体架构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#源码结构分析"><span class="nav-number">2.</span> <span class="nav-text">源码结构分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#源码结构"><span class="nav-number">2.1.</span> <span class="nav-text">源码结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#模块说明"><span class="nav-number">2.2.</span> <span class="nav-text">模块说明</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#DB-和-DBImpl"><span class="nav-number">2.2.1.</span> <span class="nav-text">DB 和 DBImpl</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Env"><span class="nav-number">2.2.2.</span> <span class="nav-text">Env</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#VersionSet-Version-VersionEdit"><span class="nav-number">2.2.3.</span> <span class="nav-text">VersionSet, Version, VersionEdit</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Snapshot"><span class="nav-number">2.2.4.</span> <span class="nav-text">Snapshot</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#MemTable-Immutable-MemTable"><span class="nav-number">2.2.5.</span> <span class="nav-text">MemTable, Immutable MemTable</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#TableBuilder-BlockBuilder"><span class="nav-number">2.2.6.</span> <span class="nav-text">TableBuilder, BlockBuilder</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#TableCache-BlockCache"><span class="nav-number">2.2.7.</span> <span class="nav-text">TableCache, BlockCache</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#重要流程分析"><span class="nav-number">2.3.</span> <span class="nav-text">重要流程分析</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Open"><span class="nav-number">2.3.1.</span> <span class="nav-text">Open</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Put"><span class="nav-number">2.3.2.</span> <span class="nav-text">Put</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Get"><span class="nav-number">2.3.3.</span> <span class="nav-text">Get</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Compaction"><span class="nav-number">2.3.4.</span> <span class="nav-text">Compaction</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#Manual-Compaction"><span class="nav-number">2.3.4.1.</span> <span class="nav-text">Manual Compaction</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#SSTable-Compaction"><span class="nav-number">2.3.4.2.</span> <span class="nav-text">SSTable Compaction</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#MemTable-Compaction"><span class="nav-number">2.3.4.3.</span> <span class="nav-text">MemTable Compaction</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Compaction-文件产出"><span class="nav-number">2.3.4.4.</span> <span class="nav-text">Compaction 文件产出</span></a></li></ol></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结与思考"><span class="nav-number">3.</span> <span class="nav-text">总结与思考</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考文献"><span class="nav-number">4.</span> <span class="nav-text">参考文献</span></a></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
       
 
       
@@ -860,6 +894,10 @@ d. 在BlockCache中查找Block，如果未命中，会将Block load到Cache中�
 
 
   
+  <script src="/js/scrollspy.js?v=7.1.0"></script>
+<script src="/js/post-details.js?v=7.1.0"></script>
+
+
 
   
 
@@ -875,6 +913,8 @@ d. 在BlockCache中查找Block，如果未命中，会将Block load到Cache中�
 
   
 
+
+  
 
 
   
